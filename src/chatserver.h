@@ -36,13 +36,13 @@ class ChatServer : public Application {
   int messagingPort;                  // to send messages to Clients
 
   string tcpAnyPortAddress(int portNumber); // to bind sockets
-  const int timeout = 250; // ms reaction time for interact with Client
+  const int timeout = TIMEOUT; // ms reaction time for interact with Client
 
   int lastClientIdx; // just to remember which ID to send next Client
   int generateUniqueClientIdentifier(); // simple increment mechanics
 
 public:
-  ChatServer(int connectionPort = 8888, int messagingPort = 8889);
+  ChatServer(int connectionPort = CONNECTION_PORT, int messagingPort = MESSAGING_PORT);
 
   // control Interfaces
   void setConnectionPort(int connectionPort);

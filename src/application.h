@@ -1,6 +1,8 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
+#include "macrodefines.h"
+
 #include <ctime>
 #include <fstream>
 #include <iomanip>
@@ -9,10 +11,6 @@
 #include <string>
 
 using namespace std;
-
-// MACRO
-#define CLASS_WITH_NAME                                                        \
-  string getClassName() { return typeid(*this).name(); }
 
 /*
  * For Server, Client and other Childs

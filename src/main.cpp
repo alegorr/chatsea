@@ -9,11 +9,11 @@
 using namespace std;
 
 /*
- * Port range macro
+ * This is simple C++ chatting program ~ChatSea~
+ * Uses ZeroMQ fast messaging over the sockets
+ * Allows to connect over 9000 Clients and more!
+ * Please, Delight!!!
  */
-#define MIN_PORT_NUMBER 0
-#define MAX_PORT_NUMBER 65535
-
 int main(int argc, char *argv[]) {
 
   /*
@@ -115,8 +115,7 @@ int main(int argc, char *argv[]) {
     }
 
     // create and cast App as Server
-    app =
-        move(make_unique<ChatServer>(port, port + 1)); // need to add PortSeeker
+    app = move(make_unique<ChatServer>(port, port + 1)); // TODO add PortSeeker
 
   } else {
 

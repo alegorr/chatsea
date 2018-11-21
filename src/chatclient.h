@@ -38,7 +38,7 @@ class ChatClient : public Application {
   unique_ptr<socket_t> socketSubscribe;
 
   string tcpLocalPortAddress(int portNumber);
-  const int timeout = 250; // ms reaction time for interact with server
+  const int timeout = TIMEOUT; // ms reaction time for interact with server
 
   /*
    * Main functions runs in different thread
@@ -58,11 +58,10 @@ class ChatClient : public Application {
   string clear(); // cout clear
 
 public:
-  ChatClient(int connectionPort = 8888, int messagingPort = 8889,
+  ChatClient(int connectionPort = CONNECTION_PORT, int messagingPort = MESSAGING_PORT,
              string clientAlias = "anon");
 
-  void
-  setConnectionPort(int connectionPort);    // reconnect Server (int the future)
+  void setConnectionPort(int connectionPort); // should reconnect Server ITF
   void setMessagingPort(int messagingPort); // etc
 
   void setClientAlias(string clientAlias); // name which will see other Client
