@@ -1,0 +1,22 @@
+Acknowledgments
+
+This is the project of simple C++ chat application ~ChatSea~
+It based on the ZeroMQ networking crossplatform library.
+The creator of the program - MD, Egor Zamotaev
+(e-mail: egor.zamotaev @mail.ru).
+
+To compile just run `make` command.
+
+For use, try:
+$ ./chatsee -s
+on the Server side.
+
+And to start chatting, simple run:
+$ ./chatsee -a<SERVER_IP> -n<NICK>
+
+For example, you may:
+$ ./chatsee
+on your local machine, after Server starts up.
+
+Now Your name is Anon. You don't forget. Don't forgive.
+
