@@ -99,6 +99,7 @@ int main(int argc, char *argv[]) {
         << "Warning! Client verbose is quite bit experimental! Better turn off!"
         << endl;
   }
+  // TODO regex IP address check
 
   /*
    * Init App

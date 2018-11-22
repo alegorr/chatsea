@@ -12,7 +12,7 @@
  */
 #define CONNECTION_PORT 8888
 #define MESSAGING_PORT 8889
-#define TIMEOUT 250
+#define TIMEOUT 1000 // ms
 
 /*
  * Something more special

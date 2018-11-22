@@ -31,6 +31,7 @@ void Application::log(string message, bool force) {
 
   // if (force && !verbose)
   //   verbose = force;
+
   // format message or beautify, if you want
   string formatedMessage = format(message);
 

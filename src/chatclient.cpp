@@ -29,18 +29,21 @@ bool ChatClient::initSocket(context_t &context, int type) {
 
   case ZMQ_REQ:
     log("Initialize Client connection socket. " + to_string(connectionPort));
-    socketRequest = make_unique<socket_t>(context, ZMQ_REQ);
+    socketRequest = make_unique<socket_t>(context, type);
     if (!connectSocket(*socketRequest.get(), connectionPort))
       initialized = false;
     break;
 
   case ZMQ_SUB:
     log("Initialize Client messaging socket. " + to_string(messagingPort));
-    socketSubscribe = make_unique<socket_t>(context, ZMQ_SUB);
-    if (!connectSocket(*socketRequest.get(), messagingPort)) {
+    socketSubscribe = make_unique<socket_t>(context, type);
+    if (!connectSocket(*socketSubscribe.get(), messagingPort)) {
       initialized = false;
     } else {
+      int linger = 0;
+      socketSubscribe->setsockopt(ZMQ_LINGER, &linger, sizeof(linger)); // closing
       socketSubscribe->setsockopt(ZMQ_SUBSCRIBE, 0, 0); // no filter needs
+      socketSubscribe->setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout)); // reaction
     }
     break;
 
@@ -58,18 +61,11 @@ bool ChatClient::connectSocket(socket_t &socket, int portNumber) {
   try {
     socket.connect(tcpLocalPortAddress(portNumber)); // here rewrite fun. IPv4
 
-  } catch (zmq::error_t &e) {
+  } catch (zmq::error_t &error) {
     log(string("Error. Can't connect socket to the port ") +
-        to_string(portNumber) + ". " + e.what());
+        to_string(portNumber) + ". " + error.what());
 
     initialized = false;
-  }
-
-  // set socket reaction timeout and proof fine closing
-  if (initialized) {
-    int linger = 0;
-    socket.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));     // closing
-    socket.setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout)); // reaction
   }
 
   return initialized;
@@ -98,18 +94,36 @@ void ChatClient::run() {
 
   while (true) {
 
-    log("Request client ID from Server.");
     string localDateTime = getLocalDateTime();
 
+    log("Request client ID from Server.");
     ChatMessage helloMessage(ID::SERVER, ID::ANY, clientAlias, localDateTime);
     helloMessage.prepare();
+
     log(helloMessage.dump());
-    socketRequest->send(helloMessage);
+
+    try {
+      socketRequest->send(helloMessage);
+
+    } catch (zmq::error_t &error) {
+      log(string("Couldn't send message to Server. ") + error.what());
+      break;
+    }
 
     log("Wait Server reply...");
     ChatMessage serverReply;
-    socketRequest->recv(&serverReply);
-    log("Receive message.");
+    int receiveStatus = 0;
+
+    try {
+      receiveStatus = socketRequest->recv(&serverReply);
+
+    } catch (zmq::error_t &error) {
+      log(string("Server not replied. ") + error.what());
+      break;
+    }
+
+    // message received
+    if (receiveStatus) {
 
     serverReply.process();
     log("Process the message..");
@@ -119,10 +133,14 @@ void ChatClient::run() {
     log("Check if the Server returns our client ID.");
     if (serverReply.getSenderAlias() == clientAlias &&
         serverReply.getContent() == localDateTime) {
+
       log(string("Ok. The Client ID is ") +
           to_string(serverReply.getReceiverId()));
+
+      // write the Client Id
       clientId = serverReply.getReceiverId();
       break;
+    }
     }
   }
 
@@ -208,7 +226,7 @@ void ChatClient::receive() {
       receiveStatus = socketSubscribe->recv(&messageFromClient);
 
     } catch (zmq::error_t &error) {
-      log(string("Force terminate SUB socket cause ") + error.what());
+      log(string("Force terminate SUB socket. ") + error.what());
       break;
     }
 
@@ -226,9 +244,8 @@ void ChatClient::receive() {
         log("Show the message to the User.");
         cout << clear() << flush
              << messageFromClient.getSenderAlias() + "> " +
-                    messageFromClient.getContent()
-             << endl
-             << flush;
+                    messageFromClient.getContent() << endl << flush;
+
         invite(); // sometimes dissapearing when logging enabled
 
       } else {

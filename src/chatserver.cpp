@@ -121,8 +121,6 @@ void ChatServer::run() {
       socketReply->send(message.copy()); // send reply/or repeat
       log("Return Message to sender.");
 
-      log(message.copy().dump());
-
       socketPublish->send(message);
       log("Send Message to all the Clients.");
 

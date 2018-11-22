@@ -4,6 +4,8 @@
 #include "application.h"
 #include "chatmessage.h"
 
+#include <unistd.h>
+
 #include <zmq.hpp>
 using namespace zmq;
 

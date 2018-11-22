@@ -11,4 +11,4 @@ $(PROG):$(SRCS)
 
 all: mv $(PROG) ../
 
-clean: ; rm -f *.o $(PROG)
+clean: ; rm -f *.o $(PROG) *.log
