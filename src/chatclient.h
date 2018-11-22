@@ -33,6 +33,7 @@ class ChatClient : public Application {
   /*
    * Network Interfaces
    */
+  string serverAddress; // IPv4 address of the Server
   bool initSocket(context_t &context, int type);
   bool connectSocket(socket_t &socket, int portNumber);
 
@@ -42,7 +43,7 @@ class ChatClient : public Application {
   int messagingPort; // to get other Clients messages
   unique_ptr<socket_t> socketSubscribe;
 
-  string tcpLocalPortAddress(int portNumber);
+  string tcpServerPortAddress(int portNumber);
   const int timeout = TIMEOUT; // ms reaction time for interact with server
 
   /*
@@ -65,9 +66,12 @@ class ChatClient : public Application {
   void setConnectionPort(int connectionPort); // should reconnect Server ITF
   void setMessagingPort(int messagingPort);   // etc, make public ITF
 
+  void setServerAddress(string serverAddress); // IPv4 x.x.x.x
+
 public:
   ChatClient(int connectionPort = CONNECTION_PORT,
-             int messagingPort = MESSAGING_PORT, string clientAlias = "anon");
+             int messagingPort = MESSAGING_PORT,
+             string serverAddress = LOCALHOST, string clientAlias = "anon");
 
   void setClientAlias(string clientAlias); // name which will see other Client
 

@@ -30,7 +30,8 @@ class ChatServer : public Application {
    * Network Interfaces
    */
   bool init(context_t &context); // set up context and sockets to work
-  bool bindSocket(socket_t &socket, int portNumber); // bind socket to port
+  int bindSocket(socket_t &socket, int portNumber); // bind socket to port
+  int getSocketPortAddress(socket_t &socket); // to get ports after searching...
 
   unique_ptr<socket_t> socketReply; // (1)st
   int connectionPort; // for get the Client messages and send server info to it

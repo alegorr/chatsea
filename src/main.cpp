@@ -4,6 +4,7 @@
 #include "optparse.h"
 
 #include <iostream>
+#include <regex>
 #include <string>
 
 using namespace std;
@@ -95,11 +96,16 @@ int main(int argc, char *argv[]) {
     return -1;
   }
   if (verbose && !server_mode) {
-    cerr
-        << "Warning! Client verbose is quite bit experimental! Better turn off!"
-        << endl;
+    cerr << "Client verbose is quite bit experimental! Option not allowed!" << endl;
+    return -1;
   }
-  // TODO regex IP address check
+  if (ip_address != "localhost" &&
+      !regex_match(ip_address,
+                   regex("^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:"
+                         "25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"))) {
+    cerr << "Wrong IP address format." << endl;
+    return -1;
+  }
 
   /*
    * Init App
@@ -116,14 +122,14 @@ int main(int argc, char *argv[]) {
     }
 
     // create and cast App as Server
-    app = move(make_unique<ChatServer>(port, port + 1)); // TODO add PortSeeker
+    app = move(make_unique<ChatServer>(port, port++));
 
   } else {
 
     cout << "Run client" << endl;
 
     // create and cast App as Client
-    app = move(make_unique<ChatClient>(port, port + 1, user_nick));
+    app = move(make_unique<ChatClient>(port, port++, ip_address, user_nick));
   }
   app->setVerbose(verbose); // send warnings to the cerr<< stream
 

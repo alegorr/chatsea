@@ -1,10 +1,11 @@
 #include "chatclient.h"
 
 ChatClient::ChatClient(int connectionPort, int messagingPort,
-                       string clientAlias) {
+                       string serverAddress, string clientAlias) {
   interruptCode = Interrupt::NOPE; // by default
   setConnectionPort(connectionPort);
   setMessagingPort(messagingPort);
+  setServerAddress(serverAddress);
   setClientAlias(clientAlias);
 }
 
@@ -14,6 +15,10 @@ void ChatClient::setConnectionPort(int connectionPort) {
 
 void ChatClient::setMessagingPort(int messagingPort) {
   this->messagingPort = messagingPort;
+}
+
+void ChatClient::setServerAddress(string serverAddress) {
+  this->serverAddress = serverAddress;
 }
 
 void ChatClient::setClientAlias(string clientAlias) {
@@ -41,9 +46,11 @@ bool ChatClient::initSocket(context_t &context, int type) {
       initialized = false;
     } else {
       int linger = 0;
-      socketSubscribe->setsockopt(ZMQ_LINGER, &linger, sizeof(linger)); // closing
+      socketSubscribe->setsockopt(ZMQ_LINGER, &linger,
+                                  sizeof(linger));      // closing
       socketSubscribe->setsockopt(ZMQ_SUBSCRIBE, 0, 0); // no filter needs
-      socketSubscribe->setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout)); // reaction
+      socketSubscribe->setsockopt(ZMQ_RCVTIMEO, &timeout,
+                                  sizeof(timeout)); // reaction
     }
     break;
 
@@ -59,7 +66,7 @@ bool ChatClient::connectSocket(socket_t &socket, int portNumber) {
   bool initialized = true;
 
   try {
-    socket.connect(tcpLocalPortAddress(portNumber)); // here rewrite fun. IPv4
+    socket.connect(tcpServerPortAddress(portNumber)); // here rewrite fun. IPv4
 
   } catch (zmq::error_t &error) {
     log(string("Error. Can't connect socket to the port ") +
@@ -125,22 +132,28 @@ void ChatClient::run() {
     // message received
     if (receiveStatus) {
 
-    serverReply.process();
-    log("Process the message..");
+      serverReply.process();
+      log("Process the message..");
 
-    log(serverReply.dump());
+      log(serverReply.dump());
 
-    log("Check if the Server returns our client ID.");
-    if (serverReply.getSenderAlias() == clientAlias &&
-        serverReply.getContent() == localDateTime) {
+      log("Check if the Server returns our client ID.");
+      string content = serverReply.getContent();
+      if (serverReply.getSenderAlias() == clientAlias &&
+          content.substr(0, localDateTime.size()) == localDateTime) {
 
-      log(string("Ok. The Client ID is ") +
-          to_string(serverReply.getReceiverId()));
+        log(string("Ok. The Client ID is ") +
+            to_string(serverReply.getReceiverId()));
 
-      // write the Client Id
-      clientId = serverReply.getReceiverId();
-      break;
-    }
+        // write the Client Id
+        clientId = serverReply.getReceiverId();
+
+        // get connection port info
+        setMessagingPort(stoi(content.substr(
+            localDateTime.size(), content.size() - localDateTime.size())));
+
+        break;
+      }
     }
   }
 
@@ -244,7 +257,9 @@ void ChatClient::receive() {
         log("Show the message to the User.");
         cout << clear() << flush
              << messageFromClient.getSenderAlias() + "> " +
-                    messageFromClient.getContent() << endl << flush;
+                    messageFromClient.getContent()
+             << endl
+             << flush;
 
         invite(); // sometimes dissapearing when logging enabled
 
@@ -279,6 +294,6 @@ void ChatClient::setInterrupt(int code) {
 bool ChatClient::notInterrupted() { return interruptCode == Interrupt::NOPE; }
 
 // simple util
-string ChatClient::tcpLocalPortAddress(int portNumber) {
-  return string("tcp://localhost:") + to_string(portNumber);
+string ChatClient::tcpServerPortAddress(int portNumber) {
+  return "tcp://" + serverAddress + ":" + to_string(portNumber);
 }

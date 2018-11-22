@@ -10,6 +10,7 @@
 /*
  * Client/Server communication defaults
  */
+#define LOCALHOST "localhost"
 #define CONNECTION_PORT 8888
 #define MESSAGING_PORT 8889
 #define TIMEOUT 1000 // ms

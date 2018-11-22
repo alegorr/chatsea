@@ -75,9 +75,7 @@ int ChatMessage::getSenderId() { return senderId; }
 string ChatMessage::getSenderAlias() { return senderAlias; }
 string ChatMessage::getContent() { return content; }
 
-string ChatMessage::dump(){
-  return to_string(receiverId) + "|" +
-  to_string(senderId) + "|" +
-  senderAlias  + "|" +
-  content;
+string ChatMessage::dump() {
+  return to_string(receiverId) + "|" + to_string(senderId) + "|" + senderAlias +
+         "|" + content;
 }

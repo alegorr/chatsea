@@ -24,6 +24,16 @@ int ChatServer::generateUniqueClientIdentifier() {
   return lastClientIdx;
 }
 
+// get port number after socket binding
+int ChatServer::getSocketPortAddress(socket_t &socket) {
+  char address[1024];
+  size_t size = sizeof(address);
+  socket.getsockopt(ZMQ_LAST_ENDPOINT, &address, &size);
+  string addr = string(address);
+  int pos = addr.rfind(':');
+  return stoi(addr.substr(pos + 1, addr.size() - pos));
+}
+
 // setup context, bind sockets
 bool ChatServer::init(context_t &context) {
 
@@ -31,22 +41,31 @@ bool ChatServer::init(context_t &context) {
 
   log("Init connection socket.", true);
   socketReply = make_unique<socket_t>(context, ZMQ_REP);
-  if (!bindSocket(*socketReply.get(), connectionPort)){
+  if (!bindSocket(*socketReply.get(), connectionPort)) {
     initialized = false;
+  } else {
+    setConnectionPort(getSocketPortAddress(*socketReply.get()));
+    log(string("Connection socket is bound at port ") +
+            to_string(connectionPort),
+        true);
   }
 
   log("Init messaging socket.", true);
   socketPublish = make_unique<socket_t>(context, ZMQ_PUB);
-  if (!bindSocket(*socketPublish.get(), messagingPort)){
+  if (!bindSocket(*socketPublish.get(), messagingPort)) {
     initialized = false;
+  } else {
+    setMessagingPort(getSocketPortAddress(*socketPublish.get()));
+    log(string("Messaging socket is bound at port ") + to_string(messagingPort),
+        true);
   }
 
   return initialized;
 }
 
-bool ChatServer::bindSocket(socket_t &socket, int portNumber) {
+int ChatServer::bindSocket(socket_t &socket, int portNumber) {
 
-  bool initialized = true;
+  bool initialized = portNumber;
 
   try {
     socket.bind(tcpAnyPortAddress(portNumber));
@@ -63,14 +82,6 @@ bool ChatServer::bindSocket(socket_t &socket, int portNumber) {
       log(string("Error. Couldn't bind socket. ") + e.what());
       initialized = false;
     }
-  }
-
-  if (initialized) {
-    // get port address
-    char address[1024];
-    size_t size = sizeof(address);
-    socket.getsockopt(ZMQ_LAST_ENDPOINT, &address, &size);
-    log(string("Socket is bound at port ") + address, true);
   }
 
   return initialized;
@@ -107,6 +118,7 @@ void ChatServer::run() {
       log("Prepare unique ID for Client.");
       message.setReceiverId(generateUniqueClientIdentifier());
       message.setSenderId(ID::SERVER);
+      message.setContent(message.getContent() + to_string(messagingPort));
       message.prepare(); // store changes
 
       socketReply->send(message); // send reply/or repeat
