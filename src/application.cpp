@@ -27,7 +27,9 @@ string Application::addBrackets(string text) { return "[" + text + "]"; }
 void Application::setVerbose(bool verbose) { this->verbose = verbose; }
 
 // main log cycle
-void Application::log(string message) {
+void Application::log(string message, bool force) {
+
+  if(force && !verbose) verbose = force;
 
   // format message or beautify, if you want
   string formatedMessage = format(message);
@@ -46,6 +48,8 @@ void Application::log(string message) {
 
   // write received message
   writeToLog(formatedMessage);
+
+  if(force && verbose) verbose = !force;
 }
 
 // send it out

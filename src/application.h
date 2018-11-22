@@ -32,7 +32,7 @@ class Application {
   void writeToLog(string formatedMessage); // end
 
 protected:
-  virtual string getClassName(); // only child of App. can get a Class Name
+  virtual string getClassName(); // only child of the App. can get a Class Name
 
 public:
   Application(bool verbose = false);
@@ -42,7 +42,7 @@ public:
 
   void setVerbose(bool verbose); // verbose log process to standart error stream
 
-  void log(string message); // send message to logfile and/or-not to cerr<<
+  void log(string message, bool force = false); // stream log to file or cerr<<
 
   virtual void run() = 0; // pure virtual fun. must be overriden at inheritance
 };

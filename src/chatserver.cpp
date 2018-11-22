@@ -30,37 +30,39 @@ bool ChatServer::init(context_t &context) {
   bool initialized = true;
 
   socketReply = make_unique<socket_t>(context, ZMQ_REP);
-  try {
-    socketReply->bind(tcpAnyPortAddress(connectionPort));
-
-  } catch (zmq::error_t &e) {
-    log(string("Error. Can't bind connection socket to port ") +
-        to_string(connectionPort) + ". " + e.what());
-
-    try {
-      log("Try bind to first free port. Search...");
-      socketReply->bind(string("tcp://*:*"));
-
-    } catch (zmq::error_t &e) {
-      log(string("Error. Couldn't bind connection socket. ") + e.what());
-      initialized = false;
-    }
-  }
+  if(!bindSocket(*socketReply.get(), connectionPort))
+    initialized = false;
 
   socketPublish = make_unique<socket_t>(context, ZMQ_PUB);
+  if(!bindSocket(*socketPublish.get(), messagingPort))
+    initialized = false;
+
+  return initialized;
+}
+
+bool ChatServer::bindSocket(socket_t& socket, int portNumber){
+
+  bool initialized = true;
+
   try {
-    socketPublish->bind(tcpAnyPortAddress(messagingPort));
+    socket.bind(tcpAnyPortAddress(portNumber));
 
   } catch (zmq::error_t &e) {
-    log(string("Error. Can't bind messaging socket to port ") +
-        to_string(messagingPort) + ". " + e.what());
+    log(string("Error. Can't bind socket to port ") +
+        to_string(portNumber) + ". " + e.what());
 
     try {
       log("Try bind to first free port. Search...");
-      socketPublish->bind(string("tcp://*:*"));
+      socket.bind(string("tcp://*:*"));
+
+      // get port address
+      char address[1024];
+      size_t size = sizeof(address);
+      socket.getsockopt(ZMQ_LAST_ENDPOINT, &address, &size);
+      log(string("Socket is bound at port ") + address, true);
 
     } catch (zmq::error_t &e) {
-      log(string("Error. Couldn't bind messaging socket. ") + e.what());
+      log(string("Error. Couldn't bind socket. ") + e.what());
       initialized = false;
     }
   }
