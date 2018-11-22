@@ -58,11 +58,11 @@ class ChatClient : public Application {
   string clear(); // cout clear
 
 public:
-  ChatClient(int connectionPort = CONNECTION_PORT, int messagingPort = MESSAGING_PORT,
-             string clientAlias = "anon");
+  ChatClient(int connectionPort = CONNECTION_PORT,
+             int messagingPort = MESSAGING_PORT, string clientAlias = "anon");
 
   void setConnectionPort(int connectionPort); // should reconnect Server ITF
-  void setMessagingPort(int messagingPort); // etc
+  void setMessagingPort(int messagingPort);   // etc
 
   void setClientAlias(string clientAlias); // name which will see other Client
 

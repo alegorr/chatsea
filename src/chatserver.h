@@ -29,6 +29,8 @@ class ChatServer : public Application {
   /*
    * Network Interfaces
    */
+  bool init(context_t &context); // set up context and sockets to work
+
   unique_ptr<socket_t> socketReply; // (1)st
   int connectionPort; // for get the Client messages and send server info to it
 
@@ -42,7 +44,8 @@ class ChatServer : public Application {
   int generateUniqueClientIdentifier(); // simple increment mechanics
 
 public:
-  ChatServer(int connectionPort = CONNECTION_PORT, int messagingPort = MESSAGING_PORT);
+  ChatServer(int connectionPort = CONNECTION_PORT,
+             int messagingPort = MESSAGING_PORT);
 
   // control Interfaces
   void setConnectionPort(int connectionPort);
