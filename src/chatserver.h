@@ -30,7 +30,7 @@ class ChatServer : public Application {
    * Network Interfaces
    */
   bool init(context_t &context); // set up context and sockets to work
-  bool bindSocket(socket_t& socket, int portNumber); // bind socket to port
+  bool bindSocket(socket_t &socket, int portNumber); // bind socket to port
 
   unique_ptr<socket_t> socketReply; // (1)st
   int connectionPort; // for get the Client messages and send server info to it
@@ -44,16 +44,14 @@ class ChatServer : public Application {
   int lastClientIdx; // just to remember which ID to send next Client
   int generateUniqueClientIdentifier(); // simple increment mechanics
 
+  void setConnectionPort(int connectionPort); // TODO rebind sockets
+  void setMessagingPort(int messagingPort);   // make public ITF
+
 public:
   ChatServer(int connectionPort = CONNECTION_PORT,
              int messagingPort = MESSAGING_PORT);
 
-  // control Interfaces
-  void setConnectionPort(int connectionPort);
-  void setMessagingPort(int messagingPort);
-
-  // start Server
-  void run() override;
+  void run() override; // rise the Server
 };
 
 #endif // CHATSERVER_H

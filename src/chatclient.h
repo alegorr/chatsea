@@ -31,6 +31,9 @@ class ChatClient : public Application {
   /*
    * Network Interfaces
    */
+  bool initSocket(context_t &context, int type);
+  bool connectSocket(socket_t &socket, int portNumber);
+
   int connectionPort;                 // to talk with Server
   unique_ptr<socket_t> socketRequest; //
 
@@ -57,12 +60,12 @@ class ChatClient : public Application {
   void invite();  // User input
   string clear(); // cout clear
 
+  void setConnectionPort(int connectionPort); // should reconnect Server ITF
+  void setMessagingPort(int messagingPort);   // etc, make public ITF
+
 public:
   ChatClient(int connectionPort = CONNECTION_PORT,
              int messagingPort = MESSAGING_PORT, string clientAlias = "anon");
-
-  void setConnectionPort(int connectionPort); // should reconnect Server ITF
-  void setMessagingPort(int messagingPort);   // etc
 
   void setClientAlias(string clientAlias); // name which will see other Client
 

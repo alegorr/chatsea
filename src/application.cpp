@@ -29,8 +29,8 @@ void Application::setVerbose(bool verbose) { this->verbose = verbose; }
 // main log cycle
 void Application::log(string message, bool force) {
 
-  if(force && !verbose) verbose = force;
-
+  // if (force && !verbose)
+  //   verbose = force;
   // format message or beautify, if you want
   string formatedMessage = format(message);
 
@@ -49,7 +49,8 @@ void Application::log(string message, bool force) {
   // write received message
   writeToLog(formatedMessage);
 
-  if(force && verbose) verbose = !force;
+  // if (force && verbose)
+  //   verbose = !force;
 }
 
 // send it out
@@ -57,7 +58,7 @@ void Application::writeToLog(string formatedMessage) {
   logfile << formatedMessage;
 
   if (verbose) {
-    cout << formatedMessage;
+    cerr << formatedMessage << flush;
   }
 }
 

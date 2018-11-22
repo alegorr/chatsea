@@ -29,18 +29,22 @@ bool ChatServer::init(context_t &context) {
 
   bool initialized = true;
 
+  log("Init connection socket.", true);
   socketReply = make_unique<socket_t>(context, ZMQ_REP);
-  if(!bindSocket(*socketReply.get(), connectionPort))
+  if (!bindSocket(*socketReply.get(), connectionPort)){
     initialized = false;
+  }
 
+  log("Init messaging socket.", true);
   socketPublish = make_unique<socket_t>(context, ZMQ_PUB);
-  if(!bindSocket(*socketPublish.get(), messagingPort))
+  if (!bindSocket(*socketPublish.get(), messagingPort)){
     initialized = false;
+  }
 
   return initialized;
 }
 
-bool ChatServer::bindSocket(socket_t& socket, int portNumber){
+bool ChatServer::bindSocket(socket_t &socket, int portNumber) {
 
   bool initialized = true;
 
@@ -48,23 +52,25 @@ bool ChatServer::bindSocket(socket_t& socket, int portNumber){
     socket.bind(tcpAnyPortAddress(portNumber));
 
   } catch (zmq::error_t &e) {
-    log(string("Error. Can't bind socket to port ") +
-        to_string(portNumber) + ". " + e.what());
+    log(string("Error. Can't bind socket to port ") + to_string(portNumber) +
+        ". " + e.what());
 
     try {
       log("Try bind to first free port. Search...");
       socket.bind(string("tcp://*:*"));
 
-      // get port address
-      char address[1024];
-      size_t size = sizeof(address);
-      socket.getsockopt(ZMQ_LAST_ENDPOINT, &address, &size);
-      log(string("Socket is bound at port ") + address, true);
-
     } catch (zmq::error_t &e) {
       log(string("Error. Couldn't bind socket. ") + e.what());
       initialized = false;
     }
+  }
+
+  if (initialized) {
+    // get port address
+    char address[1024];
+    size_t size = sizeof(address);
+    socket.getsockopt(ZMQ_LAST_ENDPOINT, &address, &size);
+    log(string("Socket is bound at port ") + address, true);
   }
 
   return initialized;
@@ -76,8 +82,7 @@ void ChatServer::run() {
   log("Initialize Server. Prepare context and sockets to work.");
   context_t context(1);
   if (!init(context)) {
-
-    log("Initialization fails.");
+    log("Initialization fails. Watch logs \"" + getLogfileName() + "\"", true);
     return;
   }
 
@@ -92,6 +97,8 @@ void ChatServer::run() {
     message.process(); // store changes
     log("Process message to read Request.");
 
+    log(message.dump());
+
     log("Check is that Client ID Request?");
     if (message.getSenderId() == ID::ANY) {
 
@@ -105,6 +112,8 @@ void ChatServer::run() {
       socketReply->send(message); // send reply/or repeat
       log("Send ID to the Client.");
 
+      log(message.dump());
+
     } else {
 
       log("Nope.");
@@ -112,8 +121,12 @@ void ChatServer::run() {
       socketReply->send(message.copy()); // send reply/or repeat
       log("Return Message to sender.");
 
+      log(message.copy().dump());
+
       socketPublish->send(message);
       log("Send Message to all the Clients.");
+
+      log(message.dump());
     }
   }
 

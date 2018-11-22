@@ -72,6 +72,8 @@ public:
   int getSenderId();
   string getSenderAlias();
   string getContent();
+
+  string dump(); // for debug only
 };
 
 #endif // CHATMESSAGE_H

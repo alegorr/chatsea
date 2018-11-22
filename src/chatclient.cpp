@@ -20,19 +20,80 @@ void ChatClient::setClientAlias(string clientAlias) {
   this->clientAlias = clientAlias;
 }
 
+// setup context, bind sockets
+bool ChatClient::initSocket(context_t &context, int type) {
+
+  bool initialized = true;
+
+  switch (type) {
+
+  case ZMQ_REQ:
+    log("Initialize Client connection socket. " + to_string(connectionPort));
+    socketRequest = make_unique<socket_t>(context, ZMQ_REQ);
+    if (!connectSocket(*socketRequest.get(), connectionPort))
+      initialized = false;
+    break;
+
+  case ZMQ_SUB:
+    log("Initialize Client messaging socket. " + to_string(messagingPort));
+    socketSubscribe = make_unique<socket_t>(context, ZMQ_SUB);
+    if (!connectSocket(*socketRequest.get(), messagingPort)) {
+      initialized = false;
+    } else {
+      socketSubscribe->setsockopt(ZMQ_SUBSCRIBE, 0, 0); // no filter needs
+    }
+    break;
+
+  default:
+    initialized = false;
+  }
+
+  return initialized;
+}
+
+bool ChatClient::connectSocket(socket_t &socket, int portNumber) {
+
+  bool initialized = true;
+
+  try {
+    socket.connect(tcpLocalPortAddress(portNumber)); // here rewrite fun. IPv4
+
+  } catch (zmq::error_t &e) {
+    log(string("Error. Can't connect socket to the port ") +
+        to_string(portNumber) + ". " + e.what());
+
+    initialized = false;
+  }
+
+  // set socket reaction timeout and proof fine closing
+  if (initialized) {
+    int linger = 0;
+    socket.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));     // closing
+    socket.setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout)); // reaction
+  }
+
+  return initialized;
+}
+
 /*
  * Main loop
  */
 void ChatClient::run() {
 
-  log("Initialize Client. Prepare context and socketRequest->");
-
+  /*
+   * 1st step: Initialization
+   */
   context_t context(1);
-  socketRequest = make_unique<socket_t>(context, ZMQ_REQ);
-  socketRequest->connect(string("tcp://localhost:") +
-                         to_string(connectionPort));
-  socketRequest->setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
+  if (!initSocket(context, ZMQ_REQ)) {
 
+    log("Initialization fails. Look up logs \"" + getLogfileName() + "\"",
+        true);
+    return;
+  }
+
+  /*
+   * 2nd step: Registration
+   */
   log("Initialization done. Try to connect to the Server...");
 
   while (true) {
@@ -42,6 +103,7 @@ void ChatClient::run() {
 
     ChatMessage helloMessage(ID::SERVER, ID::ANY, clientAlias, localDateTime);
     helloMessage.prepare();
+    log(helloMessage.dump());
     socketRequest->send(helloMessage);
 
     log("Wait Server reply...");
@@ -51,6 +113,8 @@ void ChatClient::run() {
 
     serverReply.process();
     log("Process the message..");
+
+    log(serverReply.dump());
 
     log("Check if the Server returns our client ID.");
     if (serverReply.getSenderAlias() == clientAlias &&
@@ -62,6 +126,9 @@ void ChatClient::run() {
     }
   }
 
+  /*
+   * 3nd step: Messaging
+   */
   log("Start messaging.");
 
   thread sendThread(&ChatClient::send, this);
@@ -72,6 +139,9 @@ void ChatClient::run() {
 
   log("Stop messaging. Free resources.");
 
+  /*
+   * 4th step: Closing
+   */
   socketRequest->close();
   context.close();
 
@@ -99,6 +169,7 @@ void ChatClient::send() {
       log("The message is not empty. Send it to the Server.");
       ChatMessage outputMessage(ID::ANY, clientId, clientAlias, content);
       outputMessage.prepare();
+      log(outputMessage.dump());
       socketRequest->send(outputMessage);
 
       log("Receive mirror message from the Server");
@@ -108,6 +179,7 @@ void ChatClient::send() {
       log("Process the message.");
       inputMessage.process();
 
+      log(inputMessage.dump());
     } else {
       log("Message is empty. Nothing to do.");
     }
@@ -118,21 +190,23 @@ void ChatClient::send() {
 void ChatClient::receive() {
 
   context_t context(1);
-  socketSubscribe = make_unique<socket_t>(context, ZMQ_SUB);
-  socketSubscribe->connect(tcpLocalPortAddress(messagingPort));
-  int linger = 0; // to proper shutdown ZeroMQ
-  socketSubscribe->setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
-  socketSubscribe->setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
-  socketSubscribe->setsockopt(ZMQ_SUBSCRIBE, 0, 0); // no filter needs
+  if (!initSocket(context, ZMQ_SUB)) {
+
+    log("Initialization fails. Look up logs \"" + getLogfileName() + "\"",
+        true);
+    return;
+  }
 
   while (notInterrupted()) {
 
     log("Receive updates from the Server");
     ChatMessage messageFromClient;
     int receiveStatus = 0;
+
     try {
       log("Wait message from another client...");
       receiveStatus = socketSubscribe->recv(&messageFromClient);
+
     } catch (zmq::error_t &error) {
       log(string("Force terminate SUB socket cause ") + error.what());
       break;
@@ -143,6 +217,8 @@ void ChatClient::receive() {
 
       log("Process the message.");
       messageFromClient.process();
+
+      log(messageFromClient.dump());
 
       log("Check if message not from this Client.");
       if (messageFromClient.getSenderId() != clientId) {
@@ -160,16 +236,19 @@ void ChatClient::receive() {
         log("It's our sended message. Nothing to do.");
         // would make a message arrived indicator
       }
+    } else {
+      log("Something went wrong...");
     }
   }
 
-  // free Resources
   socketSubscribe->close();
   context.close();
 }
 
 // control standart output for chatting
-void ChatClient::invite() { cout << clear() << flush << clientAlias + "> "; }
+void ChatClient::invite() {
+  cout << clear() << flush << clientAlias + "> " << flush;
+}
 string ChatClient::clear() { return "\r\e[0K"; }
 
 // make program interruption
