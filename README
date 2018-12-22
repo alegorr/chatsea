@@ -1,9 +1,15 @@
+ /\/____ _           _   ____            /\/|
+|/\/ ___| |__   __ _| |_/ ___|  ___  __ |/\/ 
+  | |   | '_ \ / _` | __\___ \ / _ \/ _` |   
+  | |___| | | | (_| | |_ ___) |  __| (_| |   
+   \____|_| |_|\__,_|\__|____/ \___|\__,_|   
+
 Acknowledgments
 
 This is the project of simple C++ chat application ~ChatSea~
 It based on the ZeroMQ networking crossplatform library.
 The creator of the program - MD, Egor Zamotaev
-(e-mail: egor.zamotaev @mail.ru).
+(e-mail: egor.zamotaev@mail.ru).
 
 To compile just run `make` command.
 
@@ -12,7 +18,7 @@ $ ./chatsee -s
 on the Server side.
 
 And to start chatting, simple run:
-$ ./chatsee -a<SERVER_IP> -n<NICK>
+$ ./chatsee -a<SERVER_IPv4> -p<PORT>
 
 For example, you may:
 $ ./chatsee
@@ -20,5 +26,6 @@ on your local machine, after Server starts up.
 
 Now Your name is Anon. You don't forget. Don't forgive.
 
-For more info look up help (-h key).
+P.S.
+For more info look up the help (-h key).
 
