@@ -4,11 +4,9 @@
   | |___| | | | (_| | |_ ___) |  __| (_| |   
    \____|_| |_|\__,_|\__|____/ \___|\__,_|   
 
-Acknowledgments
-
 This is the project of simple C++ chat application ~ChatSea~
 It based on the ZeroMQ networking crossplatform library.
-The creator of the program - MD, Egor Zamotaev
+The creator of the program - BD, Egor Zamotaev
 (e-mail: egor.zamotaev@mail.ru).
 
 To compile just run `make` command.
